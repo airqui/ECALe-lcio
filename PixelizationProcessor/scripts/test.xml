@@ -1,0 +1,39 @@
+<marlin>
+
+  <!-- The lcgeo directory where to look for the ILD model -->
+
+  <!--########  Execute  ######################################## -->
+  <execute>
+    <!--processor name="InitDD4hep"/-->
+    <processor name="MyPixelizationProcessor"/>
+    <processor name="DSTOutput"/>
+  </execute>
+
+  <!--########  Global  ######################################## -->
+  <global>
+    <parameter name="LCIOInputFiles">
+      test.slcio
+    </parameter>
+    <!--parameter name="AllowToModifyEvent" value="true" /-->  
+    <parameter name="MaxRecordNumber" value="100"/>  
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> DEBUG </parameter>
+    <parameter name="RandomSeed" value="1234567890" />
+  </global>
+
+
+  <processor name="MyPixelizationProcessor" type="PixelizationProcessor">  
+    <parameter name="ECALCollectionName" type="string"> SiEcalCollection </parameter>
+    <parameter name="MCCollectionName" type="string"> MCParticle </parameter>
+  </processor>
+
+  <processor name="DSTOutput" type="LCIOOutputProcessor">
+    <!--DST output: drop all hits, skim MCParticles and keep final Tracks, Clusters and  ReconstructedParticles-->
+    <parameter name="LCIOOutputFile" type="string" > new.slcio </parameter>
+    <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+    <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+  </processor>
+
+
+</marlin>
