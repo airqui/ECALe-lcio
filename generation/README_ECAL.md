@@ -3,6 +3,8 @@
 
 The generation is based on the [DD4hep](https://github.com/iLCSoft/lcgeo) models for detectors.
 
+*IMPORTANT* There is no pixelization for this simulation: each layer corresponds to one single active area. The pixelization is done a posteriori (see PixelizationProcessor)
+
 ## Setup
 
 The software here has been tested with key4hep : `source init_ky4hep.sh` that can be found in the main folder of this code.
