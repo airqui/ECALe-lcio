@@ -7,6 +7,8 @@ adrian.irles_at_ific.uv.es
 
 ## Instruction to run the CED event display.
 
+It assumes that you have run the Clustering example.
+
 # DISCLAIMER
 
 For some reason, the libglut3 libraries are not installed in glui01, but you cand download them from (last version) https://freeglut.sourceforge.net/docs/install.php and copy it to your local folder in glui01.ific.uv.es
@@ -50,5 +52,3 @@ source init_key4hep.sh
 >
 > Marlin display.xml
 
---> NOTE the ECAL.xml is a simple copy with of the ../../../geometry/ECALe_luxe/ECAL_CONF6_full.xml file with an extra line	 at the beginning:
-    <global detectorName="ECALe_LUXE" />
