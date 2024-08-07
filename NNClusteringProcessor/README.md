@@ -8,6 +8,8 @@
 
  File modified from the original MarlinReco NN Cluster:
 https://github.com/iLCSoft/MarlinReco/blob/master/Clustering/NNClustering
+and
+https://github.com/iLCSoft/MarlinReco/blob/master/Analysis/AddClusterProperties/src/AddClusterProperties.cc
  
 Example processor that does a simple nearest neighbour (NN) clustering on one or more CalorimeterHit 
 
