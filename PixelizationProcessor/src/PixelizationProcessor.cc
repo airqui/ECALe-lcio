@@ -19,13 +19,13 @@ PixelizationProcessor::PixelizationProcessor() : Processor("PixelizationProcesso
 
 	// input collections
 	registerInputCollection(LCIO::SIMCALORIMETERHIT,
-							"ECALCollection",
+							"SimECALCollectionName",
 							"Name of the Sim ECAL Collection",
 							_inputColName,
 							string("SiEcalCollection"));
 
 	registerInputCollection(LCIO::SIMCALORIMETERHIT,
-							"Pixel-ECALCollection",
+							"PixelECALCollectionName",
 							"Name of the Sim ECAL Collection with realistic pixel and wafer sizes",
 							_outputColName,
 							string("PixelSiEcalCollection"));
