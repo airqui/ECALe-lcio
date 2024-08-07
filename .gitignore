@@ -39,6 +39,7 @@
 *.cmake
 *Makefile*
 *install_manifest.txt
+build/
 
 #visual studio
 settings.json
