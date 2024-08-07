@@ -1,0 +1,14 @@
+# A. Irles
+# IFIC - CSIC/UV
+# https://aitanatop.ific.uv.es/aitanatop/luxe/
+# https://aitanatop.ific.uv.es/aitanatop/detector-rd/
+# August 2024
+
+# NNClustering
+
+ File modified from the original MarlinReco NN Cluster:
+https://github.com/iLCSoft/MarlinReco/blob/master/Clustering/NNClustering
+ 
+Example processor that does a simple nearest neighbour (NN) clustering on one or more CalorimeterHit 
+
+Work-in-progress
