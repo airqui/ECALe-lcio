@@ -1,0 +1,52 @@
+<marlin>
+
+  <!-- The lcgeo directory where to look for the ILD model -->
+ <constants>
+ </constants>
+  <!--########  Execute  ######################################## -->
+  <execute>
+    <!--processor name="InitDD4hep"/-->
+    <processor name="MyPixelizationProcessor"/>
+    <processor name="MySimCalo2CaloHit"/>
+    <processor name="DSTOutput"/>
+  </execute>
+
+  <!--########  Global  ######################################## -->
+  <global>
+    <parameter name="LCIOInputFiles">
+    ../../generation/run_scripts/data/ECALe_luxe_v0_QGSP_BERT_gamma_50GeV_1.slcio
+    </parameter>
+    <!--parameter name="AllowToModifyEvent" value="true" /-->  
+    <parameter name="MaxRecordNumber" value="100"/>  
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> ERROR </parameter>
+    <parameter name="RandomSeed" value="1234567890" />
+  </global>
+
+
+  <processor name="MyPixelizationProcessor" type="PixelizationProcessor">  
+    <parameter name="SimECALCollectionName" type="string"> SiEcalCollection </parameter>
+    <parameter name="PixelECALCollectionName" type="string"> PixelSiEcalCollection </parameter>
+
+  </processor>
+
+  <processor name="MySimCalo2CaloHit" type="SimCalo2CaloHit">  
+    <parameter name="PixelECALCollectionName" type="string"> PixelSiEcalCollection </parameter>
+    <parameter name="ECALCollectionName" type="string"> EcalCollection </parameter>
+    <parameter name="GeV2MIPfactor" type="FloatVec"> 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 </parameter>
+    <parameter name="ADC_Signal_over_Noise" type="float"> 10. </parameter>
+    <parameter name="TRIG_Signal_over_Noise" type="float"> 5. </parameter>
+    <parameter name="MIP_threshold" type="float"> 0.5 </parameter>
+    <parameter name="DoDigitization" type="bool"> false </parameter>
+  </processor>
+
+  <processor name="DSTOutput" type="LCIOOutputProcessor">
+    <!--DST output: drop all hits, skim MCParticles and keep final Tracks, Clusters and  ReconstructedParticles-->
+    <parameter name="LCIOOutputFile" type="string" > new.slcio </parameter>
+    <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+    <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+  </processor>
+
+
+</marlin>
