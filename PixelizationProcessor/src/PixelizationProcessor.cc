@@ -251,7 +251,7 @@ void PixelizationProcessor::processEvent(LCEvent *evt)
 				px.write();
 
 				//extra information about the hit in the pixel
-				if (px.hit = 1)
+				if (px.hit == 1)
 				{
 					px.e = ecalhit->getEnergyCont(j);
 					px.K = k;
