@@ -93,7 +93,7 @@ public:
         else return false;
       }
       void write(){
-        streamlog_out(DEBUG)<<"pixel_hit: "<< hit<<" "<<e<<" "<<t<<" "<<x<<" "<<y<<" "<<z<<" "<<I<<" "<<J<<" "<<K<<" wafer:"<<wafer<<endl;
+        streamlog_out(DEBUG)<<"pixel_hit: "<< hit<<", E "<<e<<" T "<<t<<", xyz "<<x<<" "<<y<<" "<<z<<", IJK "<<I<<" "<<J<<" "<<K<<" wafer:"<<wafer<<endl;
       }
     
   };
