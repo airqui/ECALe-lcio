@@ -45,7 +45,7 @@ int PixelizationProcessor::GetWafer(float x, float y)
 	// INPUTS ARE EXPECTED IN um
 
 	// assuming SiWECAL ASUs made of 4 wafers
-	// wafer_size = 89700um,
+	// total_wafer_size = 89700um (including dead areas)
 	// space_between_wafers = 100um
 	// dead_wafer_space = 305um (in each side)
 
@@ -95,7 +95,7 @@ int PixelizationProcessor::GetWafer(float x, float y)
 array<float, 2> PixelizationProcessor::GetWaferReferencePadXY(float x, float y, int wafer)
 {
 
-	// function to calculate the center position of the most letp-up pixel in the wafer.
+	// function to calculate the center position of the most left-bottom pixel in the wafer.
 
 	float shift_x = -100;
 	float shift_y = -100;
@@ -113,9 +113,10 @@ array<float, 2> PixelizationProcessor::GetWaferReferencePadXY(float x, float y, 
 	if (wafer > 4)
 		shift_y = -1;
 
-	//  WE GET THE center of the REFERENCE PAD for EACH Wafer, which is the one in the left, upper corner
-	float first_pad_x = shift_x * (space_between_wafers / 2 + dead_wafer_space + wafer_size + dead_wafer_space + space_between_wafers / 2) + dead_wafer_space + space_between_wafers + pixel_gap / 2 + pixel_size / 2.;
-	float first_pad_y = shift_y * (space_between_wafers / 2 + dead_wafer_space + wafer_size + dead_wafer_space + space_between_wafers / 2) + dead_wafer_space + space_between_wafers + pixel_gap / 2 + pixel_size / 2.;
+	//  WE GET THE center of the REFERENCE PAD for EACH Wafer, which is the one in the left, bottom corner
+	float distance_between_wafers = space_between_wafers + dead_wafer_space + wafer_size + dead_wafer_space;
+	float first_pad_x = shift_x * distance_between_wafers + space_between_wafers/2. + dead_wafer_space + pixel_gap / 2 + pixel_size / 2.;
+	float first_pad_y = shift_y * distance_between_wafers + space_between_wafers/2. + dead_wafer_space + pixel_gap / 2 + pixel_size / 2.;
 
 	streamlog_out(DEBUG)<<"GetWaferReferencePadXY: x:"<<x<<" y:"<<y<<" w:"<<wafer<< " fp_x:"<<first_pad_x<<" fp_y:"<<first_pad_y<<endl;
 
@@ -129,11 +130,13 @@ array<float, 2> PixelizationProcessor::GetWaferReferencePadXY(float x, float y, 
 void PixelizationProcessor::GetPixelHit(float x, float y, float ref_pad_x, float ref_pad_y, int wafer)
 {
 
-	// knowing which one is the left-upper pad of the wafer and knowing the pixel-to-pixel distance and numer of pixels per row(column)
+	// knowing which one is the left-bottom pad of the wafer and knowing the pixel-to-pixel distance and numer of pixels per row(column)
 	// we check if the hit is inside a pixel or in the gaps or in the dead areas of the wafer
 
 	streamlog_out(DEBUG)<<"GetPixelHit: x:"<<x<<" y:"<<y<<" ref_pad_x:"<<ref_pad_x<<" ref_pad_y:"<<ref_pad_y<<" w:"<<wafer<<endl;
 
+	// (I,J,K) is the universal pixel id for a pad in the whole ECAL
+	// (I,J) starts from (1,1), which is the left-bottom corner at wafer 5
 	int waferI = 0;
 	if (wafer < 5)
 		waferI = (wafer - 1) * npix_row+1;
@@ -238,7 +241,7 @@ void PixelizationProcessor::processEvent(LCEvent *evt)
 			bool save = 0;
 			for (int j = 0; j < n_cont; j++)
 			{
-
+				// using getStepPosition() instead of getPosition() for the latter only returns the left bottom corner.
 				float x = ecalhit->getStepPosition(j)[0]*1000.;//x-position of the hit in um
 				float y = ecalhit->getStepPosition(j)[1]*1000.;//y
 
@@ -282,9 +285,9 @@ void PixelizationProcessor::processEvent(LCEvent *evt)
 				}
 			}
 
-			//loop over the map of hits per readout pchannel (pixel). We will dump these hits into SimCalorimeterHits. 
+			//loop over the map of hits per readout channel (pixel). We will dump these hits into SimCalorimeterHits. 
 			//We store only one hit per channel/pixel and we keep all the MC particles (G4) associated to that hit.
-			//the ones not falling inside a pixel ae discarded.
+			//the ones not falling inside a pixel are discarded.
 			
 			for (auto it = map_hits_per_layer.begin(); it!= map_hits_per_layer.end(); it++) {
 				bool addelement=0;
