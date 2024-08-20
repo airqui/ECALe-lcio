@@ -109,7 +109,8 @@ private:
   // wafer info --> this could be given as input to the processor.
   float wafer_size = 88480; //um  -- only active area!
   float space_between_wafers = 100;//um
-  float dead_wafer_space = 305;//um (in each side)
+  // float dead_wafer_space = 305;//um (in each side)
+  float dead_wafer_space = 610;//um (in each side)
   float pixel_size=5520;//um
   float pixel_gap=10;//um
   int npix_row=16;//number of pixels per row and wafer
