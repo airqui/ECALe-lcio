@@ -192,7 +192,8 @@ error                   = ${run_local}/log/errors_$condorfile.log
 #should_transfer_files   = Yes
 #when_to_transfer_output = ON_EXIT
 +JobFlavour = "largo"
-#For longer jobs, use other flavours
+# options: comida=corto=2h, dia=largo=1d, puente=muylargo=4d, semana=eterno=1w
+# quicker the job, shorter the queue
 queue
 EOF
 
