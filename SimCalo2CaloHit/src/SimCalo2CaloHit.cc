@@ -36,7 +36,7 @@ SimCalo2CaloHit::SimCalo2CaloHit() : Processor("SimCalo2CaloHit")
 							_outputColName,
 							string("ECAL"));
 
-	vector<float> gev2mip = {0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460}
+	vector<float> gev2mip = {0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460, 0.0001460};
 	registerProcessorParameter( "GeV2MIPfactor",
 			"correction factor from GeV2MIP",
 			_gev2mip,
