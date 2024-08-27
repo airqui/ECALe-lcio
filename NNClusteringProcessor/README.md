@@ -14,3 +14,17 @@ https://github.com/iLCSoft/MarlinReco/blob/master/Analysis/AddClusterProperties/
 Example processor that does a simple nearest neighbour (NN) clustering on one or more CalorimeterHit 
 
 Work-in-progress
+
+# Compile:
+
+> source ../init_key4hep.sh
+
+> mkdir build
+> 
+> cd build
+> 
+> cmake ..
+> 
+> make -j3
+> 
+> make install
