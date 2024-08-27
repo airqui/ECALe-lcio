@@ -29,15 +29,13 @@ where (0.0) is between W2 and W7,
 
 > cd PixelizationProcessor
 >
-> source ../init_ilcsoft.sh
-
-(or use an updated one from /cvmfs/ilc.desy.de/sw/x86_64_gcc82_centos7/v02-02-03 or similar folders!)
+> source ../init_key4hep.sh
 
 > mkdir build
 > 
 > cd build
 > 
-> cmake -C $ILCSOFT/ILCSoft.cmake ..
+> cmake ..
 > 
 > make -j3
 > 
