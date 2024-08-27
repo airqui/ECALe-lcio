@@ -1,0 +1,86 @@
+<marlin>
+
+  <!-- The lcgeo directory where to look for the ILD model -->
+ <constants>
+ </constants>
+  <!--########  Execute  ######################################## -->
+  <execute>
+    <!--processor name="InitDD4hep"/-->
+    <processor name="MyPixelizationProcessor"/>
+    <processor name="MySimCalo2CaloHit"/>
+    <processor name="MyNNClustering"/>
+    <processor name="MyMarlinArbor"/>
+    <processor name="MyBushConnect"/>
+    <processor name="DSTOutput"/>
+  </execute>
+
+  <!--########  Global  ######################################## -->
+  <global>
+    <parameter name="LCIOInputFiles">
+      ../../generation/run_scripts/data/ECALe_luxe_v0_QGSP_BERT_gamma_0.5to10GeV_10.slcio
+    </parameter>
+    <!--parameter name="AllowToModifyEvent" value="true" /-->  
+    <parameter name="MaxRecordNumber" value="10"/>  
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> ERROR </parameter>
+    <parameter name="RandomSeed" value="1234567890" />
+  </global>
+
+
+  <processor name="MyPixelizationProcessor" type="PixelizationProcessor">  
+    <parameter name="SimECALCollectionName" type="string"> SiEcalCollection </parameter>
+    <parameter name="PixelECALCollectionName" type="string"> PixelSiEcalCollection </parameter>
+
+  </processor>
+
+  <processor name="MySimCalo2CaloHit" type="SimCalo2CaloHit">  
+    <parameter name="PixelECALCollectionName" type="string"> PixelSiEcalCollection </parameter>
+    <parameter name="ECALCollectionName" type="string"> EcalCollection </parameter>
+    <parameter name="GeV2MIPfactor" type="FloatVec"> 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 0.00014 </parameter>
+    <parameter name="ADC_Signal_over_Noise" type="float"> 10. </parameter>
+    <parameter name="TRIG_Signal_over_Noise" type="float"> 5. </parameter>
+    <parameter name="MIP_threshold" type="float"> 0.5 </parameter>
+    <parameter name="DoDigitization" type="bool"> false </parameter>
+  </processor>
+
+
+  <processor name="MyNNClustering" type="NNClusteringProcessor">  
+    <parameter name="EcalCollection" type="StringVec"> EcalCollection </parameter>
+    <parameter name="OutputCollection" type="string"> NNClusters </parameter>
+    <parameter name="DistanceCut" type="float"> 100 </parameter><!--distance cut in mm-->
+    <parameter name="EnergyCut" type="float"> 0. </parameter><!--energy cut in GeV-->
+  </processor>
+
+    <!-- ========== Initial clustering: from caloHit to branches ========= -->
+    <processor name="MyMarlinArbor" type="MarlinArbor">
+      <!--Hit Collection Names-->
+      <!-- <parameter name="EcalHitCollections" type="StringVec" lcioInType="CalorimeterHit">ECALBarrel ECALEndcap ECALOther LCAL LHCAL </parameter> -->
+      <parameter name="EcalHitCollections" type="StringVec" lcioInType="CalorimeterHit"> EcalCollection </parameter>
+        <parameter name="HcalHitCollections" type="StringVec" lcioInType="CalorimeterHit">  </parameter>
+        <!--Distance Threshold of Creating initial Arbor links-->
+        <parameter name="ThresholdsforArborBuilding" type="FloatVec">20 90 50 11 </parameter>
+        <parameter name="HLayerCut" type="float">1293 </parameter>
+        <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+        <parameter name="Verbosity" type="string">SILENT </parameter>
+    </processor>
+
+    <!-- ========== Further clustering: from branches to clusters & track-cluster matching ========= -->
+    <processor name="MyBushConnect" type="BushConnect">
+      <!--Track Cluster Linking. Track info represented by MCTruth at this moment-->
+      <parameter name="FlagDiagnosis" type="int">1 </parameter>
+      <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+      <parameter name="Verbosity" type="string">SILENT </parameter>
+    </processor>
+
+
+
+  <processor name="DSTOutput" type="LCIOOutputProcessor">
+    <!--DST output: drop all hits, skim MCParticles and keep final Tracks, Clusters and  ReconstructedParticles-->
+    <parameter name="LCIOOutputFile" type="string" > new.slcio </parameter>
+    <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+    <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+  </processor>
+
+
+</marlin>
