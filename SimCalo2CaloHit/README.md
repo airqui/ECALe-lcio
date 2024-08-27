@@ -12,3 +12,17 @@ This processor should also produce a digitized signal - in first approach we wil
 
 
 Work-in-progress
+
+# Compile
+
+> source ../init_key4hep.sh
+
+> mkdir build
+> 
+> cd build
+> 
+> cmake ..
+> 
+> make -j3
+> 
+> make install
