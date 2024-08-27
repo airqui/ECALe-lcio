@@ -47,7 +47,7 @@ int PixelizationProcessor::GetWafer(float x, float y)
 	// assuming SiWECAL ASUs made of 4 wafers
 	// total_wafer_size = 89700um (including dead areas)
 	// space_between_wafers = 100um
-	// dead_wafer_space = 305um (in each side)
+	// dead_wafer_space = 610um (in each side)
 
 	// W1 W2 W3 W4 --> (0.0) is between W2 and W7.
 	// W5 W6 W7 W8
@@ -55,7 +55,7 @@ int PixelizationProcessor::GetWafer(float x, float y)
 	//--> (max,max) is in W4
 	//--> (-max,-max) is in W5
 
-	float distance_between_wafers = (space_between_wafers + dead_wafer_space + wafer_size + dead_wafer_space );
+	float distance_between_wafers = CHIP_SIZE + space_between_wafers;
 
 	streamlog_out(DEBUG)<<"dist_bet_wafers: "<<distance_between_wafers<<endl;
 	streamlog_out(DEBUG)<<"x-G4hit: "<<x<<" y-G4hit:"<<y<<endl;
@@ -114,9 +114,9 @@ array<float, 2> PixelizationProcessor::GetWaferReferencePadXY(float x, float y, 
 		shift_y = -1;
 
 	//  WE GET THE center of the REFERENCE PAD for EACH Wafer, which is the one in the left, bottom corner
-	float distance_between_wafers = space_between_wafers + dead_wafer_space + wafer_size + dead_wafer_space;
-	float first_pad_x = shift_x * distance_between_wafers + space_between_wafers/2. + dead_wafer_space + pixel_gap / 2 + pixel_size / 2.;
-	float first_pad_y = shift_y * distance_between_wafers + space_between_wafers/2. + dead_wafer_space + pixel_gap / 2 + pixel_size / 2.;
+	float distance_between_wafers = CHIP_SIZE + space_between_wafers;
+	float first_pad_x = shift_x * distance_between_wafers + space_between_wafers/2. + dead_wafer_space + PIXEL_PITCH/2.;
+	float first_pad_y = shift_y * distance_between_wafers + space_between_wafers/2. + dead_wafer_space + PIXEL_PITCH/2.;
 
 	streamlog_out(DEBUG)<<"GetWaferReferencePadXY: x:"<<x<<" y:"<<y<<" w:"<<wafer<< " fp_x:"<<first_pad_x<<" fp_y:"<<first_pad_y<<endl;
 
@@ -139,23 +139,23 @@ void PixelizationProcessor::GetPixelHit(float x, float y, float ref_pad_x, float
 	// (I,J) starts from (1,1), which is the left-bottom corner at wafer 5
 	int waferI = 0;
 	if (wafer < 5)
-		waferI = (wafer - 1) * npix_row+1;
+		waferI = (wafer - 1) * npix_col+1;
 	else
-		waferI = (wafer - 5) * npix_row+1;
+		waferI = (wafer - 5) * npix_col+1;
 
 	int waferJ = 0;
 	if (wafer < 5)
-		waferJ = (npix_row + 1);
+		waferJ = npix_row + 1;
 	else waferJ=1;
 
 	float centers_x[100];
 	float centers_y[100];
 
-	for (int i = 0; i < npix_row; i++)
-	{
-		centers_x[i] = ref_pad_x + i * (pixel_size + pixel_gap);
-		centers_y[i] = ref_pad_y + i * (pixel_size + pixel_gap);
-
+	for (int i = 0; i < npix_col; i++) {
+		centers_x[i] = ref_pad_x + i*PIXEL_PITCH;
+	}
+	for (int i = 0; i < npix_row; i++) {
+		centers_y[i] = ref_pad_y + i*PIXEL_PITCH;
 	}
 
 	//struct pixel_hit px;
@@ -167,20 +167,20 @@ void PixelizationProcessor::GetPixelHit(float x, float y, float ref_pad_x, float
 	float hity = -10000;
 	float hitI = -10000;//IJK coordinates
 	float hitJ = -10000;
-	for (int i = 0; i < npix_row; i++)
-	{
-
-		if (fabs(x - centers_x[i]) < pixel_size / 2.)
-		{
+	for (int i = 0; i < npix_col; i++) {
+		if (fabs(x - centers_x[i]) < pixel_size / 2.) {
 			b_hitx = 1;
 			hitx = centers_x[i];
 			hitI = i;
+			break;
 		}
-		if (fabs(y - centers_y[i]) < pixel_size / 2.)
-		{
+	}
+	for (int i = 0; i < npix_row; i++) {
+		if (fabs(y - centers_y[i]) < pixel_size / 2.) {
 			b_hity = 1;
 			hity = centers_y[i];
 			hitJ = i;
+			break;
 		}
 	}
 

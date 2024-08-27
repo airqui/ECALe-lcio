@@ -106,14 +106,19 @@ private:
   string _inputColName;
   string _outputColName;
 
-  // wafer info --> this could be given as input to the processor.
-  float wafer_size = 88480; //um  -- only active area!
+  // WAFER INFO --> this could be given as input to the processor.
+  // safety margin between two wafers
   float space_between_wafers = 100;//um
-  // float dead_wafer_space = 305;//um (in each side)
-  float dead_wafer_space = 610;//um (in each side)
-  float pixel_size=5520;//um
-  float pixel_gap=10;//um
-  int npix_row=16;//number of pixels per row and wafer
+  // wafer size. All capitalised variables from HMMS rating doc K30-B70125
+  float CHIP_SIZE = 89700;//um
+  float ACTIVE_AREA = 88480;//um  -- only active area!
+  float dead_wafer_space = 1/2.*(CHIP_SIZE - ACTIVE_AREA);// (in each side)
+  // pixel size
+  float PIXEL_PITCH = 5530;//um
+  float PIXEL_GAP = 10;//um
+  float pixel_size = PIXEL_PITCH - PIXEL_GAP;
+  int npix_col = 16;//number of pixels per column of a wafer
+  int npix_row = 16;//number of pixels per row of a wafer
 
   //we are assuming an 8 sensor plane detector (two ASU's)
   //seen from the beam point of view, the particle will see:
