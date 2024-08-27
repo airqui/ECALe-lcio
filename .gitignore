@@ -50,8 +50,10 @@ generation/run_scripts/data
 generation/run_scripts/log
 generation/run_scripts/steer
 generation/run_scripts/macros
+*.slcio
 
 
 # temporary files
 *#*
 *~
+cdb.log

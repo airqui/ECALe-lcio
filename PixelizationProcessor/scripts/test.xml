@@ -1,4 +1,5 @@
 <marlin>
+  <constants />
 
   <!-- The lcgeo directory where to look for the ILD model -->
 
