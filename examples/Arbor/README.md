@@ -7,8 +7,6 @@ adrian.irles_at_ific.uv.es
 
 ## Instruction to run the Full Chain until the reconstruction of clusters
 
-It assumes that you have run the Clustering example.
-
 Assumes that you have generated a file with the geometry described in ../../generation
 
 Processors:
