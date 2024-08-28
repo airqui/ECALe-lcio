@@ -117,11 +117,16 @@ void SimCalo2CaloHit::processEvent(LCEvent *evt)
 
 			float t= 0;//ecalhit->getTime();
 
+			float e_error=0;
+			float e_digitized=e;
+			float e_digitized_trig=e;
 
-			float e_error = fabs(CLHEP::RandGauss::shoot( 1.0, 1./_adc_s_over_n));//error in energy is the only the pedestal width, in mip units
-			float e_digitized = CLHEP::RandGauss::shoot( e, 1./_adc_s_over_n);
-
-			float e_digitized_trig = CLHEP::RandGauss::shoot( e, 1./_trig_s_over_n);
+			if(_digitization==true) {
+				e_error = fabs(CLHEP::RandGauss::shoot( 1.0, 1./_adc_s_over_n));//error in energy is the only the pedestal width, in mip units
+				e_digitized = CLHEP::RandGauss::shoot( e, 1./_adc_s_over_n);
+				e_digitized_trig = CLHEP::RandGauss::shoot( e, 1./_trig_s_over_n);
+			}
+			
 			if(e_digitized_trig>_mip_threshold) {
 				CalorimeterHitImpl *new_ecalhit = new CalorimeterHitImpl(); // new object
 
