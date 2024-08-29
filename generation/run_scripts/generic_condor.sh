@@ -24,6 +24,8 @@ tan_py=0
 gun_x=0
 gun_y=0
 
+geometry_version="v1"
+
 # Bash options
 POSITIONAL_ARGS=()
 while [[ $# -gt 0 ]]; do
@@ -67,6 +69,11 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       shift # past value
       ;;
+    -geo_version|--gv)
+      geometry_version=y="$2"
+      shift # past argument 
+      shift # past value
+      ;;
     -*|--*)
       echo "Unknown option $1"
     #   echo $( $0 --help )
@@ -100,10 +107,9 @@ steer_path="${run_local}/steer"
 log_path="${run_local}/log"
 
 energy_in_mev=$( echo "${energy}*1000" | bc )
-energy_in_mev=$( printf "%.0f" ${energy_in_mev} )
-macfile=ECALe_luxe_${particle}_${energy_in_mev}MeV_x${gun_x}y${gun_y}_ax${tan_px}ay${tan_py}.mac
+energy_in_mev=$( printf "%.0f" $energy_in_mev )
+macfile=ECALe_luxe_${geometry_version}_${particle}_${energy}GeV_x${gun_x}y${gun_y}_ax${tan_px}ay${tan_py}.mac
 #note: -0-0 are the beam position -x-y in mm
-
 
 #Write the G4 mac file
 cat > ${run_local}/macros/$macfile <<EOF
@@ -132,7 +138,7 @@ for physlist in ${physl[@]}; do
   for it in $( eval echo {${nrun0}..${nrun}} ); do
     echo $energy $particle $it
     
-    label=${physlist}_${particle}_${energy_in_mev}MeV_${it}
+    label=${physlist}_${particle}_${energy}GeV_${it}
     echo $label
     
     scriptname=runddsim_${label}.py
@@ -153,9 +159,9 @@ SIM.runType = "run"
 #SIM.numberOfEvents = ${nevt}
 
 SIM.skipNEvents = 0
-SIM.outputFile = "${data_path}/ECALe_luxe_v0_${label}.slcio"
+SIM.outputFile = "${data_path}/ECALe_luxe_${geometry_version}_${label}.slcio"
 
-SIM.compactFile = "${geometry_folder}/ECALe_luxe_v0.xml"
+SIM.compactFile = "${geometry_folder}/ECALe_luxe_${geometry_version}.xml"
 SIM.dumpSteeringFile = "${run_local}/steer/dumpSteering.xml"
 
 SIM.field.eps_min = 0.0001*mm
@@ -175,7 +181,7 @@ EOF
 source ${source_file}
 ddsim --enableG4GPS --macroFile ${run_local}/macros/${macfile} --steeringFile ${run_local}/steer/${scriptname}
 #&> ${run_local}/log/${label}.log
-#tar czvf ${run_local}/ECALe_luxe_v0_${label}.slcio.tar.gz ECALe_luxe_v0_${label}.slcio 
+#tar czvf ${run_local}/ECALe_luxe_${geometry_version}_${label}.slcio.tar.gz ECALe_luxe_${geometry_version}_${label}.slcio 
 # mv ${steer_path}/*${condorfile}.log ${log_path}/
 #rm ${run_local}/log/errors_${condorfile}* ${run_local}/log/outfile_${condorfile}*
 EOF
