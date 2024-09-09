@@ -60,6 +60,7 @@ private:
   float _trig_s_over_n;
   float _mip_threshold;
   bool _digitization;
+  bool _convert_to_digital;
 
 
 };

@@ -54,9 +54,15 @@ SimCalo2CaloHit::SimCalo2CaloHit() : Processor("SimCalo2CaloHit")
 			_mip_threshold,
 			(float)0.5);
 	registerProcessorParameter( "DoDigitization",
-			"true= if we want to perform digitization",
+			"true= if we want to perform simple digitization",
 			_digitization,
 			true);
+	
+	registerProcessorParameter( "ConvertToDigital",
+			"true= if we want too keep only zeros and ones, i.e. a Digital Calorimeter",
+			_convert_to_digital,
+			false);
+	
 	
 }
 
@@ -134,6 +140,10 @@ void SimCalo2CaloHit::processEvent(LCEvent *evt)
 				new_ecalhit->setPosition(position);
 				new_ecalhit->setEnergy(e_digitized);
 				new_ecalhit->setEnergyError(e_error);
+				if(_convert_to_digital==true) {
+					new_ecalhit->setEnergy(1);
+					new_ecalhit->setEnergyError(0);
+				}
 				new_ecalhit->setTime(t);
 				cd_output["I"]=cd_i;
 				cd_output["J"]=cd_j;
