@@ -7,7 +7,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/ClusterImpl.h>
 
-#include "NNClusters.h"
+#include "NNClustersAIQ.h"
 
 #include <algorithm>
 
@@ -85,9 +85,9 @@ void NNClusteringProcessor::processEvent( LCEvent * evt ) {
   
   EnergyCut<CalorimeterHit> eCut( _eCut ) ;
   
-  ZIndex<CalorimeterHit,100> zIndex( 0. , 250. ) ; // this is modified wrt the Marlin Reco -4300,4300
+  ZIndex<CalorimeterHit,100> zIndex( 0. , 10. ) ; // this is modified wrt the Marlin Reco -4300,4300
 
-  NNDistance< CalorimeterHit, float> dist( _distCut )  ;
+  NNDistance< CalorimeterHit, float> dist( _distCut , _eCut)  ;
 
   LCIOCluster<CalorimeterHit> converter ;
   
@@ -100,7 +100,7 @@ void NNClusteringProcessor::processEvent( LCEvent * evt ) {
     nHit += col->getNumberOfElements()  ;
 
 //     addToGenericHitVec( h , col , eCut ) ;
-    addToGenericHitVec( h , col , eCut , zIndex ) ;
+    addToGenericHitVec( h , col , eCut);//, zIndex ) ;
   }
 
 
