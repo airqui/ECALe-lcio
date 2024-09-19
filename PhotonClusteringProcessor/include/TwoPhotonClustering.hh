@@ -117,6 +117,7 @@ private:
 
 
     struct ClusterInfo {
+    public:
         float position[3];
         double energy;
         double phi, theta;
@@ -124,7 +125,7 @@ private:
         double error_energy;        // TODO: NO implementation yet
         double *error_direction;    // TODO: NO implementation yet
     };
-    virtual ClusterInfo* GetTwoClustersArray(std::vector<Cluster *> seed, std::vector<Cluster *> soft);
+    virtual std::vector<ClusterInfo> GetTwoClustersArray(std::vector<Cluster *> seed, std::vector<Cluster *> soft);
  
  protected:
 

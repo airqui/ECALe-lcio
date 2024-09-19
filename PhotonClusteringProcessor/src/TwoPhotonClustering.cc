@@ -161,7 +161,7 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
         // float _y1=two_cluster_coordinates.at(4);
         // float _e1=two_cluster_coordinates.at(5);
 
-        ClusterInfo* twoPhotonClusters = GetTwoClustersArray(seed_clusters, soft_clusters);
+        std::vector<ClusterInfo> twoPhotonClusters = GetTwoClustersArray(seed_clusters, soft_clusters);
         /* **STRATEGY 0** GOES OUT DIRECTLY */
         if (_strategytofollow != 0) {
             float _x0 = twoPhotonClusters[0].position[0];
@@ -636,7 +636,7 @@ std::vector<float> TwoPhotonClustering::WeightedCenter( int n, double x0[], doub
 
 }
 
-TwoPhotonClustering::ClusterInfo* TwoPhotonClustering::GetTwoClustersArray(std::vector<Cluster*> seed_clusters, std::vector<Cluster*> soft_clusters) {
+std::vector<TwoPhotonClustering::ClusterInfo> TwoPhotonClustering::GetTwoClustersArray(std::vector<Cluster*> seed_clusters, std::vector<Cluster*> soft_clusters) {
     /*  Return a struct array of two clusters containing their properties
     with the option of reclustering, where the `soft_clusters` are required.
     */
@@ -694,14 +694,16 @@ TwoPhotonClustering::ClusterInfo* TwoPhotonClustering::GetTwoClustersArray(std::
         _x[1] /= _esum[1]; _y[1] /= _esum[1]; _z[1] /= _esum[1];
     }
     
-    ClusterInfo result[2];
+    std::vector<ClusterInfo> results;
     for (int i=0; i<2; i++) {
-        result[i].position[0] = _x[i];
-        result[i].position[1] = _y[i];
-        result[i].position[2] = _z[i];
-        result[i].energy = _esum[i];
-        result[i].theta = _theta[i];
-        result[i].phi = _phi[i];
+        ClusterInfo result;
+        result.position[0] = _x[i];
+        result.position[1] = _y[i];
+        result.position[2] = _z[i];
+        result.energy = _esum[i];
+        result.theta = _theta[i];
+        result.phi = _phi[i];
+        results.push_back(result);
     }
-    return result;
+    return results;
 }
