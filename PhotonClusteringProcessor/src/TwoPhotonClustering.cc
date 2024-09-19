@@ -1,11 +1,15 @@
 #include "TwoPhotonClustering.hh"
 #include <iostream>
+#include "WeightedPoints3D.h"
 
 #include "time.h"
 
 #include <algorithm>
 // fitting stuff
 #include <TMath.h>
+#include <Math/Point2D.h>
+#include <Math/Vector2D.h>
+#include <TROOT.h>
 
 using namespace lcio;
 using namespace marlin;
@@ -55,6 +59,14 @@ TwoPhotonClustering::TwoPhotonClustering() : Processor("TwoPhotonClustering")
                              _strategytofollow,
                              (int)4);
 
+    registerProcessorParameter("RadiusFactorClusteringCylinder",
+                               "Factor between 0 and 1 dictates the size of clustering cylinder", // 1 = two cylinders touching at the midpoint
+                               DISTANCE_RATIO,
+                               (float) 1);
+    registerProcessorParameter("MolierePercentage",
+                               "Factor between 0 and 1 dictates the percentage of energy recovered for a cluster",
+                               ENERGY_FACTOR,
+                               (float) 0.9);
 }
 
 
@@ -110,7 +122,10 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
       }
       else
       {
-        streamlog_out(ERROR) << " WHAT ??? there are two clusters with same energy ???? i:" << i << " e:" << energy_clus << std::endl;
+                streamlog_out(ERROR) << " WHAT ??? there are two clusters with same energy ???? i:" << i << " e:" << energy_clus << std::endl;
+                input_clusters_map.insert(pair<float, Cluster *>(energy_clus+0.001, clus)); // Add the cluster anyway but under a different key
+                // TODO: Considering to put the previous line with a do-while-loop,
+                // just in the case there would be three clusters with the same energy...
       }
     }
     // sorting the map of clusters according to energy, in descending mode
@@ -151,8 +166,10 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
     const int n = n_hits;
     int n0 = 0;
     int n1 = 0;
-    float x0[n], y0[n], z0[n], e0[n]; // all hits near cluster seed 0
-    float x1[n], y1[n], z1[n], e1[n]; // all hits near cluster seed 1
+        /* Change the following lines to double because of WeightedPoints3D,
+           hopefully will not create a fuss... */
+        double x0[n], y0[n], z0[n], e0[n]; // all hits near cluster seed 0
+        double x1[n], y1[n], z1[n], e1[n]; // all hits near cluster seed 1
 
     std::vector<float> two_cluster_coordinates=GetCenterCoordinates(seed_clusters,soft_clusters);
     float _x0=two_cluster_coordinates.at(0);
@@ -200,12 +217,12 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
           e1[n1] = hit->getEnergy();
           n1++;
         }
-      }
+                } else
 
       // ********************** strategy 2, I separate the two clusters with a cylinder of rmean = 2
       if (_strategytofollow == 2)
       {
-        if (sqrt( (position[0] - _x0)*(position[0] - _x0)+(position[1] - _y0)*(position[1] - _y0))< rmean/2.)  
+                    if (sqrt( (position[0] - _x0)*(position[0] - _x0)+(position[1] - _y0)*(position[1] - _y0)) < rmean*DISTANCE_RATIO)
         {
           x0[n0] = position[0];
           y0[n0] = position[1];
@@ -213,7 +230,7 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
           e0[n0] = hit->getEnergy();
           n0++;
         }
-        if( sqrt( (position[0] - _x1)*(position[0] - _x1)+(position[1] - _y1)*(position[1] - _y1) )<rmean/2.)
+                    if( sqrt( (position[0] - _x1)*(position[0] - _x1)+(position[1] - _y1)*(position[1] - _y1)) < rmean*DISTANCE_RATIO)
         {
           x1[n1] = position[0];
           y1[n1] = position[1];
@@ -221,7 +238,7 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
           e1[n1] = hit->getEnergy();
           n1++;
         }
-      }
+                } else
 
       // ********************** strategy 3, we use the cylinder that contains the 90% of the energy
       if (_strategytofollow == 3)
@@ -242,7 +259,7 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
           e1[n1] = hit->getEnergy();
           n1++;
         }
-      }
+                } else
 
      // ********************** strategy 4, we use the cylinder that contains the 90% of the energy and we remove the last layers with only few hits
       if (_strategytofollow == 4)
@@ -338,6 +355,8 @@ void TwoPhotonClustering::processEvent(LCEvent *evt)
       
       output_cluster->addElement(newCluster);
 
+                    // Cleanup TGraph2D *g in TDirectory; TGraph2D object by default has name "Graph2D"
+                    gROOT->Delete("Graph2D");
     }
   }
   else
@@ -370,85 +389,96 @@ void TwoPhotonClustering::end()
   // 	    << std::endl ;
 }
 
-std::vector<float> TwoPhotonClustering::GetCenterCoordinates( std::vector<Cluster*> seed_clusters, std::vector<Cluster*> soft_clusters) {
+std::vector<float> TwoPhotonClustering::GetCenterCoordinates(std::vector<Cluster*> seed_clusters, std::vector<Cluster*> soft_clusters) {
+/*  Return the central coordinates (2D) of the two main clusters,
+    with the option of reclustering, where the `soft_clusters` are required.
+    Needs further clean-up. */
 
     float _x0 = seed_clusters.at(0)->getPosition()[0];
     float _y0 = seed_clusters.at(0)->getPosition()[1];
-    float _z0 = seed_clusters.at(0)->getPosition()[2];
+    // float _z0 = seed_clusters.at(0)->getPosition()[2];
     float _e0 = seed_clusters.at(0)->getEnergy();
     float _e0sum = seed_clusters.at(0)->getEnergy();
-    float _e0invsum=1./_e0;
+    // float _e0invsum=1./_e0;
+    auto cluster_0 = ROOT::Math::XYPoint(_x0, _y0);
 
     float _x1 = seed_clusters.at(1)->getPosition()[0];
     float _y1 = seed_clusters.at(1)->getPosition()[1];
-    float _z1 = seed_clusters.at(1)->getPosition()[2];
+    // float _z1 = seed_clusters.at(1)->getPosition()[2];
     float _e1 = seed_clusters.at(1)->getEnergy();
     float _e1sum = seed_clusters.at(1)->getEnergy();
-    float _e1invsum=1./_e1;
-
-    float xmean = (_x0 + _x1) / 2.;
-    float ymean = (_y0 + _y1) / 2.;
-    float rmean = sqrt((_x0 - xmean) * (_x0 - xmean) + (_y0 - ymean) * (_y0 - ymean));
+    // float _e1invsum=1./_e1;
+    auto cluster_1 = ROOT::Math::XYPoint(_x1, _y1);
+    
+    // Geometric centre of the two clusters
+    // float xmean = (_x0 + _x1) / 2.;
+    // float ymean = (_y0 + _y1) / 2.;
+    // float rmean = sqrt((_x0 - xmean) * (_x0 - xmean) + (_y0 - ymean) * (_y0 - ymean));
+    float dmean = (cluster_0-cluster_1).R(); // dmean == 2*rmean, just for clarification
 
     //If _doRecluster == true and we have more than 0 soft-clusters, we recluster them if they are close to the main cluster.
     // ad-hoc criteria: close is defined as in a radius (x-y) smaller than half the distance between the two main clusters.
     // shall we tune this? shall we add more criteria like energy cuts ?
+    float RECLUSTER_RATIO = 0.5; // Should be a factor <1/2, otherwise will cause dilemma of soft cluster assignment
 
+    // Centre of a cluster is the weighted average of its hits
     if(soft_clusters.size()>0 && _doRecluster==true) {
-      _x0*=(1./_e0);
-      _y0*=(1./_e0);
-      _z0*=(1./_e0);
-      _x1*=(1./_e1);
-      _y1*=(1./_e1);
-      _z1*=(1./_e1);
-      
+        // Weighted positions of the clusters
+        _x0 *= _e0;
+        _y0 *= _e0;
+        // _z0 *= _e0;
+        _x1 *= _e1;
+        _y1 *= _e1;
+        // _z1 *= _e1;
+        
 
-    for(int isoft=0; isoft<soft_clusters.size(); isoft++) {
-      float position[3];
-      position[0] = soft_clusters.at(isoft)->getPosition()[0];
-      position[1] = soft_clusters.at(isoft)->getPosition()[1];
-      position[2] = soft_clusters.at(isoft)->getPosition()[2];
-      float _e = soft_clusters.at(isoft)->getEnergy();
+        for(int isoft=0; isoft<soft_clusters.size(); isoft++) {
+            float position[3];
+            position[0] = soft_clusters.at(isoft)->getPosition()[0];
+            position[1] = soft_clusters.at(isoft)->getPosition()[1];
+            // position[2] = soft_clusters.at(isoft)->getPosition()[2];
+            auto soft_position = ROOT::Math::XYPoint(position[0], position[1]);
+            float _e = soft_clusters.at(isoft)->getEnergy();
 
-      if (sqrt( (position[0] - _x0/_e0invsum)*(position[0] - _x0/_e0invsum)+(position[1] - _y0/_e0invsum)*(position[1] - _y0/_e0invsum))< rmean/2.)  {
-        _x0+=(position[0]/_e);
-        _y0+=(position[1]/_e);
-        _z0+=(position[2]/_e);
-        _e0+=_e;
-        _e0invsum+=1./_e;
-        _e0sum+=_e;
-      }
-      if (sqrt( (position[0] - _x1/_e1invsum)*(position[0] - _x1/_e1invsum)+(position[1] - _y1/_e1invsum)*(position[1] - _y1/_e1invsum))< rmean/2.)  {
-        _x1+=(position[0]/_e);
-        _y1+=(position[1]/_e);
-        _z1+=(position[2]/_e);
-        _e1+=_e;
-        _e1invsum+=1./_e;
-        _e1sum+=_e;
-       }
-      
+            if ((cluster_0 - soft_position).R() < dmean*RECLUSTER_RATIO) {
+                _x0 += position[0] * _e;
+                _y0 += position[1] * _e;
+                // _z0 += position[2] * _e;
+                // _e0 += _e;
+                // _e0invsum += 1./_e;
+                _e0sum += _e;
+            }
+            if ((cluster_1 - soft_position).R() < dmean*RECLUSTER_RATIO) {
+                _x1 += position[0] * _e;
+                _y1 += position[1] * _e;
+                // _z1 += position[2] * _e;
+                // _e1 += _e;
+                // _e1invsum+=1./_e;
+                _e1sum += _e;
+            }
+            
+        }
+
+
+        _x0 /= _e0sum;
+        _y0 /= _e0sum;
+        // _z0 /= _e0sum;
+
+        _x1 /= _e1sum;
+        _y1 /= _e1sum;
+        // _z1 /= _e1sum;
     }
 
 
-      _x0/=_e0invsum;
-      _y0/=_e0invsum;
-      _z0/=_e0invsum;
+    std::vector<float> result;
+    result.push_back(_x0);
+    result.push_back(_y0);
+    result.push_back(_e0sum);
+    result.push_back(_x1);
+    result.push_back(_y1);
+    result.push_back(_e1sum);
 
-      _x1/=_e1invsum;
-      _y1/=_e1invsum;
-      _z1/=_e1invsum;
-    }
-
-
-  std::vector<float> result;
-  result.push_back(_x0);
-  result.push_back(_y0);
-  result.push_back(_e0sum);
-  result.push_back(_x1);
-  result.push_back(_y1);
-  result.push_back(_e1sum);
-
-  return result;
+    return result;
 
 }
 
@@ -536,15 +566,15 @@ float TwoPhotonClustering::FindRadius90(LCCollection* input_calohits, float _x0,
       position[2] = hit->getPosition()[2];
       float energy = hit->getEnergy();
 
-      if (sqrt( (position[0] - _x0)*(position[0] - _x0)+(position[1] - _y0)*(position[1] - _y0))< radius)  {
-        energy_sum+=energy;
-      }
-     }
-     if(energy_sum/energy_cl >0.9) {
-      radius_90=radius;
-      break;
-     }
-  }
+            if (sqrt( (position[0] - _x0)*(position[0] - _x0)+(position[1] - _y0)*(position[1] - _y0))< radius)  {
+                energy_sum+=energy;
+            }
+         }
+         if(energy_sum/energy_cl > ENERGY_FACTOR) {
+            radius_90=radius;
+            break;
+         }
+    }
 
   return radius_90;
 
@@ -561,7 +591,7 @@ void TwoPhotonClustering::line(double t, const double *p, double &x, double &y, 
 }
 
 
-std::vector<float> TwoPhotonClustering::WeightedCenter( int n, float x0[], float y0[], float z0[], float e0[]) {
+std::vector<float> TwoPhotonClustering::WeightedCenter( int n, double x0[], double y0[], double z0[], double e0[]) {
 
   float x=0, y=0, z=0;
   float wsum=0;

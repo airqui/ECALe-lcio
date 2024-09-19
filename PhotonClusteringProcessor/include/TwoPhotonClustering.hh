@@ -75,7 +75,7 @@ class TwoPhotonClustering : public Processor {
   virtual float FindRadius90(LCCollection* input_calohits, float x0,float y0, float rmean, float energy_cl);
   virtual float FindZEndShower(LCCollection* input_calohits, float _x0,float _y0, float r);
   virtual void line(double t, const double *p, double &x, double &y, double &z) ;
-  virtual std::vector<float> WeightedCenter( int n, float x0[], float y0[], float z0[], float e0[]);
+    virtual std::vector<float> WeightedCenter( int n, double x0[], double y0[], double z0[], double e0[]);
 
 
 // function Object to be minimized
@@ -129,6 +129,8 @@ class TwoPhotonClustering : public Processor {
   //int _nPhotonstoReconstruct;
   int _strategytofollow;
   bool _doRecluster;
+    float ENERGY_FACTOR;
+    float DISTANCE_RATIO;
 
   //float _distCut{};
   //float _eCut{};
