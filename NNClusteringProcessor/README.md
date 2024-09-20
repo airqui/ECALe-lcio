@@ -15,6 +15,12 @@ Example processor that does a simple nearest neighbour (NN) clustering on one or
 
 Work-in-progress
 
+# Notes
+`NNClustering` gives:
+- Position of the cluster based on its centre of gravity with the energy deposit as the weight for each hit;
+- Direction of the cluster based on its covariance matrix.
+These information are obtained using methods in MarlinUtil::WeightedPoints3D.
+
 # Compile:
 
 > source ../init_key4hep.sh
