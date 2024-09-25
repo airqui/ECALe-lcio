@@ -153,7 +153,7 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
         double x0[n], y0[n], z0[n], e0[n]; // all hits near cluster seed 0
         double x1[n], y1[n], z1[n], e1[n]; // all hits near cluster seed 1
 
-        std::vector<float> two_cluster_coordinates=GetCenterCoordinates(seed_clusters,soft_clusters);
+        // std::vector<float> two_cluster_coordinates=GetCenterCoordinates(seed_clusters,soft_clusters);
         // float _x0=two_cluster_coordinates.at(0);
         // float _y0=two_cluster_coordinates.at(1);
         // float _e0=two_cluster_coordinates.at(2);
@@ -162,6 +162,11 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
         // float _e1=two_cluster_coordinates.at(5);
 
         std::vector<ClusterInfo> twoPhotonClusters = GetTwoClustersArray(seed_clusters, soft_clusters);
+        double cluster_e_ratio = twoPhotonClusters[0].energy / twoPhotonClusters[1].energy;
+        if (cluster_e_ratio < 0.5 || cluster_e_ratio > 2.0) {
+            std::cout<<"NNClustering Failed! Energy difference is larger than 2 (should be 1)..." <<endl;
+            return;
+        }
         /* **STRATEGY 0** GOES OUT DIRECTLY */
         if (_strategytofollow != 0) {
             float _x0 = twoPhotonClusters[0].position[0];
@@ -178,6 +183,8 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
             float r1_90=FindRadius90(input_calohits,_x1,_y1,rmean,_e1);
             float last_layer_r0_90=FindZEndShower(input_calohits,_x0,_y0,r0_90); // last layer with 1/2 of the maximum hits
             float last_layer_r1_90=FindZEndShower(input_calohits,_x1,_y1,r1_90);
+            std::cout<<"Moliere: "<<rmean*DISTANCE_RATIO<<"\t"<<r0_90<<"\t"<<r1_90<<endl;
+            std::cout<<"Clusters: "<<_e0*0.0141<<"\t"<<_e1*0.0141<<endl;
 
             /* **RECLUSTER THE HITS** */
             for (int i = 0; i < n_hits; i++) {
@@ -273,11 +280,9 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
                 }
             }
 
-            bool flagUsingFit = false;
+            bool flagUsingFit = true;
             if (flagUsingFit) {
                 for (int iphotons = 0; iphotons < 2; iphotons++) {
-
-                    ClusterImpl *newCluster = new ClusterImpl(); // new object
                     float energy_cl=0;
                     float e_energy_cl=0;
                 
@@ -286,16 +291,17 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
                     // if(iphotons==0) n=n0;
                     // else n=n1;
                     
-                    energy_cl=two_cluster_coordinates.at(2+3*iphotons);
-                    newCluster->setEnergy(energy_cl);
-                    newCluster->setEnergyError(0);
+                    // energy_cl=two_cluster_coordinates.at(2+3*iphotons);
+                    // twoPhotonClusters[iphotons].energy = energy_cl;
+                    // newCluster->setEnergyError(0);
                     std::vector<float> center;
                     if(iphotons==0) center=WeightedCenter(n0,x0,y0,z0,e0);
                     else center=WeightedCenter(n1,x1,y1,z1,e1);
-
-                    float position[3]={center.at(0),center.at(1),center.at(2)};
+                    
+                    for (int j=0; j<3; j++) twoPhotonClusters[iphotons].position[j] = center.at(j);
+                    // float position[3]={center.at(0),center.at(1),center.at(2)};
                     // float eposition[3]={center.at(3),center.at(4),center.at(5)}; // NOT DONE!
-                    newCluster->setPosition(position);
+                    // newCluster->setPosition(position);
                     //cluster->setPositionError(eposition);
 
                     TGraph2D *g;
@@ -318,7 +324,7 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
                         Error("line3Dfit","Line3D Fit failed");
                     }
                     const ROOT::Fit::FitResult & result = fitter.Result();
-                    result.Print(std::cout);
+                    // result.Print(std::cout);
 
                     // get fit parameters
                     const double * parFit = result.GetParams();
@@ -338,25 +344,22 @@ void TwoPhotonClustering::processEvent(LCEvent *evt) {
                         if(iangle==1) {cl_direction_x+=xx;cl_direction_y+=yy;cl_direction_z+=zz;}
                     }
                     cl_direction_polar.SetXYZ(cl_direction_x, cl_direction_y, cl_direction_z);
-                    float cl_theta = cl_direction_polar.Theta();
-                    float cl_phi = cl_direction_polar.Phi();
-                    newCluster->setITheta(cl_theta);
-                    newCluster->setIPhi(cl_phi);
+                    twoPhotonClusters[iphotons].theta = cl_direction_polar.Theta();
+                    twoPhotonClusters[iphotons].phi = cl_direction_polar.Phi();
                 
-                    output_cluster->addElement(newCluster);
+                    // output_cluster->addElement(newCluster);
 
                     // Cleanup TGraph2D *g in TDirectory; TGraph2D object by default has name "Graph2D"
                     gROOT->Delete("Graph2D");
                 }
             } else {
-                WeightedPoints3D *cl_hits;
-
                 for (int iphotons = 0; iphotons < 2; iphotons++) {
+                    WeightedPoints3D *cl_hits;
                     if (iphotons==0) {
                         cl_hits = new WeightedPoints3D(n0, &e0[0], &x0[0], &y0[0], &z0[0]);
                     } else if (iphotons==1) {
                         cl_hits = new WeightedPoints3D(n1, &e1[0], &x1[0], &y1[0], &z1[0]);
-                    } else streamlog_out(ERROR) << "WHAT??? Chech index `iphotons`" <<endl;
+                    } else streamlog_out(ERROR) << "WHAT??? Check index `iphotons`" <<endl;
                     
                     twoPhotonClusters[iphotons].energy = cl_hits->getTotalWeight();
                     
