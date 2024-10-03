@@ -1,0 +1,120 @@
+<marlin>
+
+    <!-- The lcgeo directory where to look for the ILD model -->
+    <constants>
+        <constant name="ENERGY" value="ENERGY_00000MeV" />"
+        <constant name="RUNTAG" value="ECALe_luxe_v1_QGSP_BERT_e-_${ENERGY}" />"
+        <constant name="RUNID1" value="RUNID1_00" />"
+        <constant name="RUNID2" value="RUNID2_00" />"
+        <constant name="INPUTPATH" value="/lustre/ific.uv.es/prj/gl/abehep.flc/LUXE/ECALe_SimAnalysis/NPOD_samples/20240904_v1/pixelization/data" />"
+        <constant name="INPUTPREFIX" value="Pixelised_" />"
+        <constant name="OUTPUTPATH" value="/lustre/ific.uv.es/prj/gl/abehep.flc/LUXE/ECALe_SimAnalysis/NPOD_samples/20240904_v1/clustering/data" />"
+        <!-- <constant name="OUTPUTPATH" value="output" />" -->
+        <!-- <constant name="OUTPUTPREFIX" value="ArborCluster" />" -->
+        <constant name="OUTPUTPREFIX" value="TwoPhotonCluster_" />"
+    </constants>
+    <!--########  Execute  ######################################## -->
+    <execute>
+        <!--processor name="InitDD4hep"/-->
+        <processor name="EventMerger"/>
+        <processor name="Digitiser"/>
+        <processor name="NNClusteriser"/>
+        <!-- <processor name="ArborRanger"/>
+        <processor name="ArborBushConnector"/> -->
+       
+        <processor name="TwoPhotonReconstructor"/>
+
+        <processor name="DSTOutput"/>
+    </execute>
+
+    <!--########  Global  ######################################## -->
+    <global>
+        <parameter name="LCIOInputFiles">
+            ${INPUTPATH}/${INPUTPREFIX}${RUNTAG}_${RUNID1}.slcio
+        </parameter>
+        <parameter name="AllowToModifyEvent" value="false" />
+        <!-- <parameter name="MaxRecordNumber" value="1500"/> -->
+        <parameter name="SkipNEvents" value="0"/>
+        <parameter name="SupressCheck" value="false"/>
+        <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT">
+            DEBUG
+        </parameter>
+        <!-- <parameter name="RandomSeed" value="1234567890" /> -->
+    </global>
+
+
+    <processor name="EventMerger" type="MergeEvents">  
+        <!-- ##WIP## ONLY ONE FILE IS ALLOWED HERE ##WIP## -->
+        <parameter name="InputFileNames" type="StringVec">
+            ${INPUTPATH}/${INPUTPREFIX}${RUNTAG}_${RUNID2}.slcio
+        </parameter>
+        <parameter name="NumberMergeEvents" type="int"> 1 </parameter>
+        <parameter name="CollectionMap" type ="StringVec"> MCParticle MCParticle SiEcalCollection SiEcalCollection PixelSiEcalCollection PixelSiEcalCollection </parameter>
+        <!-- <parameter name="OutputFileName" type="string">
+            ${OUTPUTPATH}/${OUTPUTPREFIX}${RUNTAG}_5.slcio
+        </parameter> -->
+        <parameter name="Verbosity" options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT">
+            DEBUG
+        </parameter>
+    </processor>
+
+    <processor name="Digitiser" type="SimCalo2CaloHit">  
+        <parameter name="PixelECALCollectionName" type="string"> PixelSiEcalCollection </parameter>
+        <parameter name="ECALCollectionName" type="string"> EcalCollection </parameter>
+        <parameter name="GeV2MIPfactor" type="FloatVec"> 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 0.000146 </parameter>
+        <parameter name="ADC_Signal_over_Noise" type="float"> 10. </parameter>
+        <parameter name="TRIG_Signal_over_Noise" type="float"> 5. </parameter>
+        <parameter name="MIP_threshold" type="float"> 0.5 </parameter>
+        <parameter name="DoDigitization" type="bool"> true </parameter>
+    </processor>
+    
+    <processor name="NNClusteriser" type="NNClusteringProcessor">  
+        <parameter name="EcalCollection" type="StringVec"> EcalCollection </parameter>
+        <parameter name="OutputCollection" type="string"> NNClusters </parameter>
+        <parameter name="DistanceCut" type="float"> 18.7 </parameter><!--distance cut in mm-->
+        <parameter name="EnergyCut" type="float"> 2. </parameter><!--energy cut in MIP-->
+    </processor>
+    
+    <!-- ========== Initial clustering: from caloHit to branches ========= -->
+    <processor name="ArborRanger" type="MarlinArbor">
+    <!--Hit Collection Names-->
+        <!-- <parameter name="EcalHitCollections" type="StringVec" lcioInType="CalorimeterHit">ECALBarrel ECALEndcap ECALOther LCAL LHCAL </parameter> -->
+        <!-- <parameter name="HcalHitCollections" type="StringVec" lcioInType="CalorimeterHit">  </parameter> -->
+        <parameter name="EcalHitCollections" type="StringVec" lcioInType="CalorimeterHit"> EcalCollection </parameter>
+    <!--Distance Threshold of Creating initial Arbor links-->
+        <!-- parameter name="ThresholdsforArborBuilding" type="FloatVec">20 90 50 11 </parameter-->
+        <!--parameter name="HLayerCut" type="float">1293 </parameter -->
+        <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+        <parameter name="Verbosity" type="string"> SILENT </parameter>
+  </processor>
+  
+    <!-- ========== Further clustering: from branches to clusters & track-cluster matching ========= -->
+    <processor name="ArborBushConnector" type="BushConnect">
+    <!--Track Cluster Linking. Track info represented by MCTruth at this moment-->
+        <parameter name="FlagDiagnosis" type="int">1 </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+        <parameter name="Verbosity" type="string"> SILENT </parameter>
+    </processor>
+
+    <processor name="TwoPhotonReconstructor" type="TwoPhotonClustering">
+        <parameter name="CaloHitInputCollection" type="string"> EcalCollection </parameter>
+        <parameter name="NNClusterInputCollection" type="string"> NNClusters </parameter> 
+        <parameter name="OutputCollection" type="string"> TwoPhotonClusters </parameter>
+        <parameter name="Strategy" type="int"> 1 </parameter>
+        <parameter name="DoReclustering" type="bool"> false </parameter>
+        <parameter name="RadiusFactorClusteringCylinder" type="float"> 1 </parameter>
+        <parameter name="MolierePercentage" type="float"> 0.9 </parameter>
+        <parameter name="Verbosity" type="string"> SILENT </parameter>
+    </processor>
+
+
+    <processor name="DSTOutput" type="LCIOOutputProcessor">
+        <!--DST output: drop all hits, skim MCParticles and keep final Tracks, Clusters and ReconstructedParticles-->
+        <parameter name="LCIOOutputFile" type="string" >
+            ${OUTPUTPATH}/${OUTPUTPREFIX}${RUNTAG}_${RUNID1}+${RUNID2}.slcio
+        </parameter>
+        <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+        <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+    </processor>
+
+</marlin>
