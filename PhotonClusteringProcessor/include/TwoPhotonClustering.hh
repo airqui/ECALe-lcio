@@ -6,6 +6,7 @@
 #include <string>
 #include <EVENT/Cluster.h>
 #include <EVENT/CalorimeterHit.h>
+#include <UTIL/CellIDDecoder.h>
 
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/ClusterImpl.h>
@@ -16,6 +17,7 @@
 #include <TCanvas.h>
 #include <TF2.h>
 #include <TH1.h>
+#include <TH1D.h>
 #include <Math/Functor.h>
 #include <TPolyLine3D.h>
 #include <Math/Vector3D.h>
@@ -30,6 +32,10 @@
 #include <TMatrixD.h>
 #include <TMatrixDSym.h>
 #include <TRotation.h>
+
+#ifdef MARLIN_AIDA //AIDA
+#include <marlin/AIDAProcessor.h>
+#endif
 
 using namespace lcio ;
 using namespace marlin ;
@@ -67,14 +73,23 @@ public:
     virtual void end() ;
 
     // define the parametric line equation
+
+    TH1* _x_res_origin;
+    TH1* _y_res_origin;
+    TH1* _r_res_origin;
     
+    //TH1* _x_res_layer0;
+    //TH1* _y_res_layer0;
+    //TH1* _r_res_layer0;
+
 private:
 
     virtual std::vector<float> GetCenterCoordinates( std::vector<Cluster*> cl1, std::vector<Cluster*> cl2);
-    virtual float FindRadius90(LCCollection* input_calohits, float x0,float y0, float rmean, float energy_cl);
-    virtual float FindZEndShower(LCCollection* input_calohits, float _x0,float _y0, float r);
+    virtual float FindRadius90(LCCollection* input_calohits, float x0[],float y0[], float rmean, float energy_cl);
+    virtual float FindZEndShower(LCCollection* input_calohits, float _x0[],float _y0[], float r);
     virtual void line(double t, const double *p, double &x, double &y, double &z) ;
     virtual std::vector<float> WeightedCenter( int n, double x0[], double y0[], double z0[], double e0[]);
+    virtual std::vector<float> GetFittedCoordinates(int n, double x[], double y[], double z[], double e[]);
 
 
 // function Object to be minimized
@@ -141,7 +156,8 @@ private:
     bool _doRecluster;
     float ENERGY_FACTOR;
     float DISTANCE_RATIO;
-
+    int _lastlayer;
+    bool _boolAnalogue;
     //float _distCut{};
     //float _eCut{};
 
